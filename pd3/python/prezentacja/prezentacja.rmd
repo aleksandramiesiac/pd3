@@ -1,0 +1,269 @@
+---
+title: "PADPY PD3"
+author: Aleksandra Miesiąc & Tymoteusz Makowski
+date:  21 stycznia 2019
+header-includes:
+- \setbeamercovered{transparent}
+- \usepackage{tikz}
+- \usetikzlibrary{arrows.meta}
+- \graphicspath{{obrazki/}}
+output:
+    beamer_presentation:
+        theme: "Frankfurt"
+        colortheme: "wolverine"
+---
+# Ekspert
+
+## Gdzież on się podział?
+ 1. Wybieramy posty które mają zaakceptowaną odpowiedź:
+    ```
+    posts.dropna(subset = "AcceptedAnswerId")
+    ```
+\pause
+ 2. Robimy tabelkę użytkowników, którzy "zamknęli" post swoją odpowiedzią
+ \pause
+ 3. Grupujemy po identyfikatorze konta użytkownika i zliczamy ilość wystąpień.
+ \pause
+ 4. Sortujemy względem liczby zamkniętych postów.
+\pause
+ 5. Wybieramy pierwszy rekord 
+ \pause
+ 6. Mamy zwycięzcę!
+ 
+## "egreg"! Parę informacji:
+Spójrzmy na aktwność na poszczególnych forach naszego Eksperta:
+```{r, echo=FALSE, fig.cap="Aktywność Eksperta", out.width = '100%'}
+knitr::include_graphics("ekspert.png")
+```
+
+## Ciekawe fakty:
+
+Jak wygląda zależność między pytaniami a odpowiedziami Eksperta?
+
+
+| Forum      | PostTypeId | odp i pyt |
+|------------|------------|-----------|
+| tex        | 2          | 17317     |
+| math       | 2          | 7098      |
+| italian    | 2          | 180       |
+| codereview | 2          | 4         |
+| english    | 2          | 1         |
+
+Co można o nim wywynioskować?
+
+* że jest mistrzem texa
+    
+* że jest matematykiem
+    
+* że lubi włoski/jest włochem
+    
+* klepie kod
+    
+## Ciekawe fakty cd.
+Zobaczmy więc, jego AboutMe:
+```
+I'm a mathematician working in algebra. 
+I've been using TeX since 1987, but couldn't write 
+my Ph.D. thesis with it. Sob!
+
+I teach LaTeX at my university, besides the mathematics 
+courses. I'm the author of some LaTeX packages and 
+even of one Plain TeX package. At my site it's possible 
+to download my book on LaTeX programming (in Italian).
+```
+Wniosek? 
+
+-> Nie trzeba znać osoby, żeby ją znać :)
+
+## Coś bardziej ekscytującego?
+Zobaczmy, gdzie się plasuje nasz zawodnik w turnieju na najwięcej napisanych postów: [>Interaktywny wykres<](https://plot.ly/~aleksandramiesiac/12/)
+```{r pressure , echo=FALSE, fig.cap="Aktywność 100 Najlepszych", out.width='100%', out.height= '60%'}
+knitr::include_graphics("top100.png")
+```
+
+# Najbardziej zżyte ze sobą pary użytkowników
+
+## Co to znaczy być „zżytym”?
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+		\tikzset{User/.style={draw,circle,fill=white,minimum size=5pt, inner sep=2pt, thick}}
+		\draw
+			(0,0) node (1) [User] {Użytkownik 1.}
+			(0:7cm) node (2) [User] {Użytkownik 2.}; \pause 
+		\draw
+		    (2cm, 2cm) node (ap) [label=center:Pytanie A] {}
+		    (1) -- (ap); \pause
+		\draw
+		    (5cm, 2cm) node (ao) [label=center:Odpowiedź A] {}
+		    (2) -- (ao); \pause
+		\draw[-{Latex[length=2mm]}]
+		    (ao) to [out=135, in=45] (ap); \pause
+		\draw
+		    (5cm, -2cm) node (bp) [label=center:Pytanie B] {}
+		    (2) -- (bp); \pause
+		\draw
+		    (2cm, -2cm) node (bo) [label=center:Odpowiedź B] {}
+		    (1) -- (bo); \pause
+        \draw[-{Latex[length=2mm]}]
+            (bo) to [out=-45, in=-135] (bp);
+	\end{tikzpicture}
+\end{figure}
+
+## Co to znaczy być „zżytym”?
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+		\tikzset{User/.style={draw,circle,fill=white,minimum size=5pt, inner sep=2pt, thick}}
+		\pgfmathsetmacro\x{3.5}
+		\pgfmathsetmacro\y{-1.5}
+		\draw (0,0) node (1) [User] {Użytkownik 1.}
+			(0:7cm) node (2) [User] {Użytkownik 2.}; 
+		\draw (2cm, 2cm) node (ap) [label=center:Pytanie A] {}
+		    (1) -- (ap);
+		\draw (5cm, 2cm) node (ao) [label=center:Odpowiedź A] {}
+		    (2) -- (ao);
+		\draw[-{Latex[length=2mm]}] (ao) to [out=135, in=45] (ap);
+		\draw (5cm, -2cm) node (bp) [label=center:Pytanie B] {}
+		    (2) -- (bp);
+		\draw (2cm, -2cm) node (bo) [label=center:Odpowiedź B] {}
+		    (1) -- (bo);
+        \draw[-{Latex[length=2mm]}] (bo) to [out=-45, in=-135] (bp);
+        \draw[red,fill=red] (0+\x,0+\y) .. controls (0+\x,0.75+\y) and (-1.5+\x,1.00+\y) .. (-1.5+\x,2+\y)  arc (180:0:0.75)  -- cycle;
+        \draw[red,fill=red] (0+\x,0+\y) .. controls (0+\x,0.75+\y) and ( 1.5+\x,1.00+\y) .. ( 1.5+\x,2+\y)  arc (0:180:0.75) -- cycle;
+	\end{tikzpicture}
+\end{figure}
+
+## Jak znaleźć takich kompanów?
+
+1. Dzielimy posty na:
+    * pytania, które mają zaakceptowane odpowiedzi,
+    * odpowiedzi.
+\pause
+
+1. Scalamy te tabele ze sobą względem wartości:
+```
+(Forum, Id) == (Forum, AcceptedAnswerId).
+```
+\pause
+
+1. Tę tabelkę łączymy z użytkownikami dwukrotnie:
+    * raz, żeby odczytać identyfikator konta osoby pytającej,
+    * drugi, aby wydobyć identyfikator konta osoby odpowiadającej.
+\pause
+
+| AccPytający | Forum       | AccOdpowiadający |
+|-------------|-------------|------------------|
+| 5581116     | devops      | 1178508          |
+| 1773383     | security    | 61611            |
+
+
+## Jak znaleźć takich kompanów?
+
+4. Tabelkę z poprzedniego kroku: \pause
+
+    * łączymy ze sobą po kluczach
+    
+        ```
+        AccOdpowiadający == AccPytający
+        ```\pause
+        
+    * zostawiamy tylko te rekordy, gdzie
+    
+        ```
+        AccPytający_Left == AccOdpowiadający_prawy
+        ```\pause
+        
+    * grupujemy po
+    
+        ```
+        (Użytkownik1 = AccPytający_Left,
+        Użytkownik2 = AccOdpowiadający_prawy)
+        ```\pause
+
+| Użytkownik1 | Użytkownik2 | LiczbaWymian |
+|-------------|-------------|--------------|
+| 5314232     | 6854495     | 2            |
+| 6906961     | 6906961     | 1            |
+| 8770670     | 1408765     | 4            |
+
+## Kto z kim się lubi?
+
+\begin{figure}
+    \vspace{-5px}
+    \centering
+    \includegraphics[height=0.9\textheight]{"parka_ktora_sobie_odpowiada-wykres1"}
+\end{figure}
+
+## Kto z kim się lubi bardziej niż 10 razy?
+
+\begin{figure}
+    \vspace{-5px}
+    \centering
+    \includegraphics[height=0.9\textheight]{"parka_ktora_sobie_odpowiada-wykres2"}
+\end{figure}
+
+## Podsumowanie internetowych zbliżeń
+
+| Informacja                   | Soliści | Tandemy |
+|------------------------------|---------|---------|
+| Liczba użytkowników          | 93465   | 9094    |
+| Średnia liczba interakcji    | 19.63   | 5.91    |
+| Maksymalna liczba interakcji | 53361   | 1716    |
+
+## Na których forach spotkamy najwięcej solistów?
+
+\begin{figure}
+    \vspace{-5px}
+    \centering
+    \includegraphics[height=0.9\textheight]{"parka_ktora_sobie_odpowiada-wykres3"}
+\end{figure}
+
+
+# Aktywność a wydarzenia
+## Jak to zrobić?
+Każdy wynik będzie opierał się o podobny schemat działania:
+
+\pause
+1. Grupujemy ilość postów po dacie.
+
+\pause
+2. Zliczamy ilość wystąpień postów danego dnia.
+
+## Rozgrzewka
+Zobaczmy jaka jest zależność, między posiadaną ilością kont na forach, a aktywnością użytkowników.
+
+```{r , echo=FALSE, fig.cap="Aktywność vs Ilość forów", out.width='100%',out.height='60%'}
+knitr::include_graphics("actv_vs_size.png")
+```
+
+## Ukraina
+
+Mimo, że ukrainian forum ma 1806 użytkowników, to na aktywność na nim dba tylko 4 użytkowników.
+[>Wykres Interaktywny<](https://plot.ly/~aleksandramiesiac/36/aktywnosc-wspolna-owneruserid-4-owneruserid-8-owneruserid-1505-owneruserid-1467/)
+```{r , echo=FALSE, fig.cap="Ukrainian forum", out.width='100%', out.height='60%'}
+knitr::include_graphics("ukraina.png")
+```
+
+
+## Bitcoin
+
+Możemy śmiało powiedzieć, że kurs bitcoina wpłynął na jego zainteresowanie.
+[>Wykres interaktywny<](https://plot.ly/~aleksandramiesiac/26/course-bitcoin-vs-activity/)
+
+```{r , echo=FALSE, fig.cap="Bitcoin", out.width='100%',out.height='60%'}
+knitr::include_graphics("bitcoin.png")
+```
+
+## Rolnictwo
+
+Zauważmy jak bardzo zmienia się aktywność na forum, gdy zbliża się sezon.
+[>Wykres Interaktywny<](https://plot.ly/~aleksandramiesiac/30/aktywnosc/)
+
+```{r , echo=FALSE, fig.cap="Rolnictwo", out.width='100%',out.height='60%'}
+knitr::include_graphics("garden.png")
+```
+
+

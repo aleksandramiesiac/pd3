@@ -1,0 +1,253 @@
+---
+title: "PADR PD3"
+author: Aleksandra Miesiąc & Tymoteusz Makowski
+date:  16 stycznia 2019
+header-includes:
+- \setbeamercovered{transparent}
+- \graphicspath{{obrazki/}}
+output:
+    beamer_presentation:
+        theme: "Frankfurt"
+        colortheme: "wolverine"
+---
+```{r, include=FALSE}
+library(dplyr)
+library(data.table)
+library(stringi)
+library(pryr)
+library(ggplot2)
+library(RColorBrewer)
+library('ggwordcloud')
+```
+# Statuetka - Złota łopata 2019
+## Nagroda za odkopany najstarszy post
+To znaczy, szukamy osoby, która odpowiedziała na dane pytanie najpóźniej.
+
+Sprawdźmy, jak to wygląda na różnych forach.
+
+ 1.Szukamy najpóźniejszej odpowiedzi na dane pytanie, tj:
+ 
+  \pause
+  
+  * PostTypeId==2, max(CreationDate), groupby = ParentId
+  
+  \pause
+  
+  * PostTypeId==1 
+  
+  \pause
+  
+  * łączymy powyższe tabelki po Id=ParentId, 
+  
+  \pause
+  
+  * Obliczamy różnicę w dniach między pytaniem a odpowiedzią
+
+## Top 20 największych czasów oczekiwania na forach
+ 
+```{r, include=FALSE}
+baza<- read.csv(file.path("..", "dane", "najwiekszy_czas_oczekiwania_n_ forach"))
+baza<- data.frame(baza)
+baza[, "roznica"] <- as.numeric(baza[, "roznica"])
+baza<-baza[order(-baza$roznica),]
+baza1<- head(baza, 20)
+``` 
+
+```{r, echo=FALSE}
+colourCount = 20
+getPalette = colorRampPalette(brewer.pal(9, "Set1"))
+print(
+ggplot(baza1, aes(x = reorder(Forum,roznica), y = roznica, fill = as.factor(roznica))) +
+    geom_bar(stat = "identity")+scale_fill_manual(values = getPalette(colourCount))+  
+    theme(legend.position = "none",axis.text.x=element_text(angle=60, hjust=1, size = 18)) 
+  +coord_cartesian(ylim=c(3100,3800)) +labs(x="")
+)
+```
+
+## Nagroda!
+Statuetka wędruje do...
+
+```{r, echo=FALSE, fig.align='center', out.height="100px"}
+knitr::include_graphics(file.path("obrazki", "szpadel.png"))
+```
+
+\pause
+
+### Christian Lescuyer!
+z wynikiem 3736.779 dni! 
+
+# Ulubione pupile
+```{r, include=FALSE}
+slowa_zwierze <- fread(file.path("..", "dane", "pets_slowa_chmura.csv"))
+dt_posty_zwierzaki_cumsum <- fread(file.path("..", "dane","pets_slowa_kategorie.csv"))[,
+    Date:=stri_datetime_parse(CreationDate, format="y-M-dd'T'HH:mm:ss")
+]
+```
+
+
+## Jak wydobyć te informacje?
+
+1. Z każdego posta wyciągamy liczbę użytych słów. \pause
+1. Znajdujemy nazwy gatunków i zwierząt, które były użyte więcej niż 50 razy. \pause
+
+Dodatkowo
+
+3. Dzielimy zwięrzęta na grupy. \pause
+1. Zliczamy liczbę wystąpień reprezentantów danej grupy w każdym poście. \pause
+1. Patrzymy na skumulowaną sumę wystąpień każdej z grup.
+
+## O kim mowa najczęściej
+```{r, echo=FALSE}
+(
+    ggplot(slowa_zwierze, aes(label=WORD, size=FREQ))
+        + geom_text_wordcloud_area(eccentricity = 1)
+        + scale_size_area(max_size = 50)
+        + theme_minimal()
+)
+
+# Kolejne wykresy są obrazkami, bo parka ggplot-knir mają jakieś problemy ze sobą, w starciu z polskimi znakami w legendzie
+```
+
+## Liczba wystąpień słów w czasie
+
+```{r, echo=FALSE}
+(
+    ggplot(dt_posty_zwierzaki_cumsum, aes(x=Date))
+    +geom_line(aes(y=psy, color="Psy"))
+    +geom_line(aes(y=koty, color="Koty"))
+    +geom_line(aes(y=króliki, color="Kroliki"))
+    +geom_line(aes(y=ptaki, color="Ptaki"))
+    +geom_line(aes(y=gady, color="Gady"))
+    +geom_line(aes(y=robaki, color="Robaki"))
+    +geom_line(aes(y=żółwie, color="Zolwie"))
+    +geom_line(aes(y=fretki, color="Fretki"))
+    +geom_line(aes(y=konie, color="Konie"))
+    +geom_line(aes(y=ślimaki, color="Slimak"))
+    +geom_line(aes(y=gryzonie, color="Gryzonie"))
+    +geom_line(aes(y=wodne, color="Wodne"))
+    +labs(x="Data", y="Liczba wystapien", color="Kategoria")
+    +scale_x_datetime(expand=c(0, 0))
+    +scale_y_continuous(expand=c(0, 0))
+    +theme_classic()
+    +theme(
+        axis.title=element_text(size=16),
+        axis.text=element_text(size=13),
+        legend.title=element_text(size=15),
+        legend.text=element_text(size=13))
+)
+```
+
+
+## Liczba wystąpień słów w czasie cd.
+```{r, echo=FALSE}
+(
+    ggplot(dt_posty_zwierzaki_cumsum, aes(x=Date))
+    +geom_line(aes(y=króliki, color="Kroliki"))
+    +geom_line(aes(y=ptaki, color="Ptaki"))
+    +geom_line(aes(y=gady, color="Gady"))
+    +geom_line(aes(y=robaki, color="Robaki"))
+    +geom_line(aes(y=żółwie, color="Zolwie"))
+    +geom_line(aes(y=fretki, color="Fretki"))
+    +geom_line(aes(y=konie, color="Konie"))
+    +geom_line(aes(y=ślimaki, color="Slimak"))
+    +geom_line(aes(y=gryzonie, color="Gryzonie"))
+    +geom_line(aes(y=wodne, color="Wodne"))
+    +labs(x="Data", y="Liczba wystapien", color="Kategoria")
+    +scale_x_datetime(expand=c(0, 0))
+    +scale_y_continuous(expand = c(0, 0))
+    +theme_classic()
+    +theme(
+        axis.title=element_text(size=16),
+        axis.text=element_text(size=13),
+        legend.title=element_text(size=15),
+        legend.text=element_text(size=13))
+)
+```
+
+# Kiedy użytkownicy bywają najbardziej aktywni?
+```{r, include=FALSE}
+dni <- c("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+# wykres 1
+dt_dane_total_dni <- fread(file.path("..", "dane", "aktywnosc_dzienna_total.csv"))
+dt_dane_per_forum_dni <- fread(file.path("..", "dane", "aktywnosc_dzienna.csv"))
+
+# wykres 2
+dt_dane_per_forum_godziny <- fread(file.path("..", "dane", "aktywnosc_godzinowa.csv"))
+
+# wykres 3
+dt_per_forum_godziny_usa <- fread(file.path("..", "dane", "aktywnosc_godzinowa_usa.csv"))
+```
+
+## Jak się tego dowiedzieć?
+
+* Aktywność w ciągu tygodnia:
+    1. Grupujemy posty względem dnia tygodnia i forum.
+    1. Zliczamy liczbę postów w danym dniu na danym forum.
+    1. Standaryzujemy te liczby względem dni tygodnia. \pause
+* Aktywność w ciągu dnia:
+    1. Grupujemy posty względem godziny utworzenia posta i dnia tygodnia.
+    1. Zliczamy liczbę postów w danym dniu w danej godzinie.
+    1. Standaryzujemy względem dni tygodnia. \pause
+* Aktywność w ciągu dnia w USA:
+    1. Jak wyżej z tym, że rozważamy jedynie te posty, których właściciele podali lokalizację `USA` lub `United States`.
+    
+## Aktywność w ciągu tygodnia
+
+```{r, echo=FALSE}
+(
+    plt <- ggplot()
+        +geom_line(data=dt_dane_per_forum_dni,
+                   aes(x=factor(Weekday, dni), y=Z, color=Forum, group=Forum), show.legend=FALSE)
+        +geom_line(data=dt_dane_total_dni,
+                   aes(x=factor(Weekday, dni), y=TotalZ, group=1), size=1.25)
+        +labs(y="Standaryzowana liczba postow")
+        +scale_x_discrete(expand=c(0, 0))
+        +scale_y_continuous(expand=c(0, 0))
+        +theme_classic()
+        +theme(
+            axis.title.x=element_blank(),
+            axis.title.y=element_text(size=16),
+            axis.text.x=element_text(size=13, angle=45, hjust=1),
+            axis.text.y=element_text(size=13),
+            panel.border=element_rect(colour = "black", fill=NA, size=0.6))
+)
+```
+
+## Aktywność w ciągu dnia
+```{r, echo=FALSE}
+(
+    plt <- ggplot(dt_dane_per_forum_godziny, aes(x=Hour, y=Z, color=factor(Weekday, dni), group=Weekday))
+        +geom_line()
+        +labs(x="Godzina [UTC]", y="Standaryzowana liczba postow", color="Dzien tygodnia")
+        +scale_x_continuous(expand=c(0, 0))
+        +scale_y_continuous(expand=c(0, 0))
+        +theme_classic()
+        +theme(
+            axis.title=element_text(size=16),
+            axis.text=element_text(size=13),
+            legend.title=element_text(size=15),
+            legend.text=element_text(size=13),
+            panel.border=element_rect(colour = "black", fill=NA, size=0.6))
+)
+```
+
+## Bliższe spojrzenie na USA
+```{r, echo=FALSE}
+(
+    plt <- ggplot(dt_per_forum_godziny_usa, aes(x=Hour, y=Z, color=factor(Weekday, dni), group=Weekday))
+        +geom_line()
+        +labs(x="Godzina [EST]", y="Standaryzowana liczba postow", color="Dzien tygodnia")
+        +scale_x_continuous(expand=c(0, 0))
+        +scale_y_continuous(expand=c(0, 0))
+        +theme_classic()
+        +theme(
+            axis.title=element_text(size=16),
+            axis.text=element_text(size=13),
+            legend.title=element_text(size=15),
+            legend.text=element_text(size=13),
+            panel.border=element_rect(colour = "black", fill=NA, size=0.6))
+)
+```
+
+
